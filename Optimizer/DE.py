@@ -4,7 +4,7 @@ from Optimizer import MyProblem
 
 def DE_exe(Dim, max_iter, NIND, benchmark, scale_range, VarType):
     obj_trace = []
-    problem = MyProblem.DE_Problem(Dim, benchmark, scale_range, obj_trace, VarType)  # 实例化问题对象
+    problem = MyProblem.Problem(Dim, benchmark, scale_range, obj_trace, VarType)  # 实例化问题对象
     population = ea.Population(Encoding="RI", NIND=NIND)
     """===========================算法参数设置=========================="""
     myAlgorithm = ea.soea_DE_currentToBest_1_L_templet(problem, population)

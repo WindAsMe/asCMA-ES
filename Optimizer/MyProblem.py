@@ -2,7 +2,7 @@ import geatpy as ea
 import numpy as np
 
 
-class DE_Problem(ea.Problem):
+class Problem(ea.Problem):
 
     def __init__(self, Dim, benchmark, scale_range, obj_trace, VarType):
         name = 'MyProblem'
