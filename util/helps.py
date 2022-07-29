@@ -1,6 +1,6 @@
 import random
 import geatpy as ea
-from DE import MyProblem
+from Optimizer import MyProblem
 import copy
 
 

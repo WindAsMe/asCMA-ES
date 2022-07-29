@@ -1,6 +1,6 @@
 import numpy as np
 from util import helps
-from DE import DE
+from Optimizer import DE, ES, GA, CMAES
 import benchmark
 import math
 from os import path
@@ -22,7 +22,7 @@ def Normal(Dim):
 
 if __name__ == "__main__":
     # Target function is [1, 8]
-    # Evaluation times = Dim * 3000
+    # Evaluation times = Dim * 15000
     # NIND = Dim * 50
     this_path = path.realpath(__file__)
     trial_run = 30
@@ -34,29 +34,42 @@ if __name__ == "__main__":
         obj, var, int_var, cons, LB, UB = problem.info()
         func = problem.evaluate
         Dim = var
-        Gene_len = int(math.log2(Dim)) - 1
-        pop_size = 5
-        epsilon = 0.001
-        max_len = int(var / 2)
         int_var_start = Dim - int_var
-        print(int_var_start)
-        NIND = Dim * 30
-        FEs = Dim * 1500
+
+        NIND = Dim * 100
+        FEs = Dim * 10000
         scale_range = [LB, UB]
+        Max_iter = int(FEs / NIND)
+        VarTypes = [0] * Dim
+        for i in range(int_var_start, Dim):
+            VarTypes[i] = 1
+
+        """Path definition"""
+        DE_obj_path = path.dirname(this_path) + '/data/obj/DE/obj/f' + str(func_num)
+        DE_CV_path = path.dirname(this_path) + '/data/obj/DE/cv/f' + str(func_num)
+        ES_obj_path = path.dirname(this_path) + '/data/obj/ES/obj/f' + str(func_num)
+        ES_CV_path = path.dirname(this_path) + '/data/obj/ES/cv/f' + str(func_num)
+        GA_obj_path = path.dirname(this_path) + '/data/obj/GA/obj/f' + str(func_num)
+        GA_CV_path = path.dirname(this_path) + '/data/obj/GA/cv/f' + str(func_num)
+
+        """Trial run"""
         for i in range(trial_run):
 
-            """Trial run"""
+            """Optimization with DE"""
+            DE_obj_trace, DE_best_indi_CV = DE.DE_exe(Dim, Max_iter, NIND, problem.evaluate, scale_range, VarTypes)
+            write_obj(DE_obj_trace, DE_obj_path)
+            write_obj(helps.CV_Normalize(DE_best_indi_CV), DE_CV_path)
 
-            """Normal method"""
-            Normal_Max_iter = int(FEs / NIND)
-            Normal_Vars = [0] * Dim
-            for i in range(int_var_start, Dim):
-                Normal_Vars[i] = 1
-            Normal_obj_trace, Normal_best_indi_CV = DE.DE_exe(Dim, Normal_Max_iter, NIND, problem.evaluate, scale_range,
-                                                                       Normal_Vars)
-            Normal_obj_path = path.dirname(this_path) + '/Data/obj/DE/f' + str(func_num)
-            Normal_CV_path = path.dirname(this_path) + '/Data/CV/DE/f' + str(func_num)
-            write_obj(Normal_obj_trace, Normal_obj_path)
-            write_obj(helps.CV_Normalize(Normal_best_indi_CV), Normal_CV_path)
+            """Optimization with ES"""
+            ES_obj_trace, ES_best_indi_CV = ES.ES_exe(Dim, Max_iter, NIND, problem.evaluate, scale_range, VarTypes)
+            write_obj(ES_obj_trace, ES_obj_path)
+            write_obj(helps.CV_Normalize(ES_best_indi_CV), ES_CV_path)
+
+            """Optimization with GA"""
+            GA_obj_trace, GA_best_indi_CV = GA.GA_exe(Dim, Max_iter, NIND, problem.evaluate, scale_range, VarTypes)
+            write_obj(GA_obj_trace, GA_obj_path)
+            write_obj(helps.CV_Normalize(GA_best_indi_CV), GA_CV_path)
+
+
 
 
