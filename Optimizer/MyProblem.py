@@ -30,3 +30,6 @@ class Problem(ea.Problem):
         pop.CV = np.array(Cons)
         self.obj_trace.append(np.min(Obj))
 
+    def evalVars(self, Vars):
+        return self.benchmark(Vars)
+

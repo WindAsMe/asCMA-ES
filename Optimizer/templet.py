@@ -74,34 +74,9 @@ soea_DE_currentToBest_1_L_templet : class - 差分进化DE/current-to-best/1/bin
             population = (prophetPop + population)[:NIND]  # 插入先知种群
         self.call_aimFunc(population)  # 计算种群的目标函数值
         population.FitnV = ea.scaling(population.ObjV, population.CV, self.problem.maxormins)  # 计算适应度
+        sigma = 1.3
         # ===========================开始进化============================
         while not self.terminated(population):
-
-
-            """Apply LS based on CMA-ES between best individual"""
-            best_indi = np.argmax(population.FitnV)
-            LSPop = ea.Population(population.Encoding, population.Field, NIND / 10)  # 存储试验个体
-            Generator = CMA(mean=np.array(population.Chrom[best_indi]), bounds=self.problem.ranges, sigma=1.3,
-                            population_size=NIND / 10)
-            Phen = []
-            CV = []
-            ObjV = []
-            for _ in range(Generator.population_size):
-                x = Generator.ask()
-                x = individual_verify(x, self.problem.varTypes, self.problem.ranges)
-                obj, cv = self.problem.evalVars(x)
-                Phen.append(x)
-                CV.append(cv)
-                ObjV.append(obj)
-            LSPop.ObjV = np.array(ObjV)
-            LSPop.Chrom = np.array(Phen)
-            LSPop.Phen = np.array(Phen)
-            LSPop.CV = np.array(CV)
-
-            tPop = population + LSPop
-            tPop.FitnV = ea.scaling(tPop.ObjV, tPop.CV, self.problem.maxormins)  # 计算适应度
-            population = tPop[ea.selecting('otos', tPop.FitnV, NIND)]
-
 
             # 进行差分进化操作
             r0 = np.arange(NIND)
@@ -114,4 +89,35 @@ soea_DE_currentToBest_1_L_templet : class - 差分进化DE/current-to-best/1/bin
             tempPop = population + experimentPop  # 临时合并，以调用otos进行一对一生存者选择
             tempPop.FitnV = ea.scaling(tempPop.ObjV, tempPop.CV, self.problem.maxormins)  # 计算适应度
             population = tempPop[ea.selecting('otos', tempPop.FitnV, NIND)]  # 采用One-to-One Survivor选择，产生新一代种群
+
+            """Apply LS based on CMA-ES between best individual"""
+            best_indi = np.argmax(population.FitnV)
+            LSPop = ea.Population(population.Encoding, population.Field, int(NIND / 10))  # 存储试验个体
+            Generator = CMA(mean=np.array(population.Chrom[best_indi]), bounds=self.problem.ranges.T, sigma=sigma,
+                            population_size=int(NIND / 10))
+            Phen = []
+            CV = []
+            ObjV = []
+            solutions = []
+            for _ in range(Generator.population_size):
+                x = Generator.ask()
+                x = individual_verify(x, self.problem.varTypes, self.problem.ranges)
+                obj, cv = self.problem.evalVars(x)
+                Phen.append(x)
+                CV.append(cv)
+                ObjV.append(obj)
+            LSPop.ObjV = np.array(ObjV)
+            LSPop.Chrom = np.array(Phen)
+            LSPop.Phen = np.array(Phen)
+            LSPop.CV = np.array(CV)
+            tPop = population + LSPop
+            tPop.FitnV = ea.scaling(tPop.ObjV, tPop.CV, self.problem.maxormins)  # 计算适应度
+            sort_index = np.argsort(-np.array(tPop.FitnV[:, 0]))
+            population = tPop[sort_index[0:NIND]]
+            for i in range(int(NIND / 10)):
+                solutions.append((population.Phen[i], population.ObjV[i]))
+            Generator.tell(solutions)
+            sigma = Generator._sigma
+            population.shuffle()
+
         return self.finishing(population)  # 调用finishing完成后续工作并返回结果
